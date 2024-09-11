@@ -75,7 +75,7 @@ def predict_pos(player, born, matchplayed, gls, ast, crdy, crdr):
     rf = random_forest_classification(training, target)
     pos_predict = rf.predict(row_user)
 
-    # Gestisci le posizioni multiple
+    # Gestisci le posizioni
     predicted_pos = [key for key, value in pos_dictionary.items() if value == pos_predict[0]]
 
     if predicted_pos:

@@ -49,7 +49,7 @@ def knn_classification(training, target):
     )
     knn_1 = grid_search_knn.fit(x_train, y_train)
     y_pred_knn1 = knn_1.predict(x_test)
-    print("Migliori parametri (KNN):", grid_search_knn.get_params_)
+    #print("Migliori parametri (KNN):", grid_search_knn.get_params_)
 
     # Applicazione del miglior modello
     knn = KNeighborsClassifier(**grid_search_knn.best_params_)
@@ -57,8 +57,8 @@ def knn_classification(training, target):
     y_pred = knn.predict(x_test)
 
     # Risultati
-    print("Accuratezza (KNN):", metrics.accuracy_score(y_test, y_pred))
-    print(classification_report(y_test, y_pred, zero_division=0))
+    #print("Accuratezza (KNN):", metrics.accuracy_score(y_test, y_pred))
+    #print(classification_report(y_test, y_pred, zero_division=0))
 
     return knn
 
@@ -80,12 +80,12 @@ def gaussian_nb_classification(training, target):
         estimator=gau,
         param_grid=parameters_gau,
         cv=10,
-        verbose=1,
+        verbose=0,
         scoring='accuracy'
     )
     gau_1 = grid_search_gau.fit(x_train, y_train)
     y_pred_gau1 = gau_1.predict(x_test)
-    print("Migliori parametri (GaussianNB):", grid_search_gau.best_params_)
+    #print("Migliori parametri (GaussianNB):", grid_search_gau.best_params_)
 
     # Applicazione del miglior modello
     gau = GaussianNB(var_smoothing=grid_search_gau.best_params_['var_smoothing'])
@@ -93,8 +93,8 @@ def gaussian_nb_classification(training, target):
     y_pred_gau = gau.predict(x_test)
 
     # Risultati
-    print("Accuratezza (GaussianNB):", metrics.accuracy_score(y_test, y_pred_gau))
-    print(classification_report(y_test, y_pred_gau, zero_division=0))
+    #print("Accuratezza (GaussianNB):", metrics.accuracy_score(y_test, y_pred_gau))
+    #print(classification_report(y_test, y_pred_gau, zero_division=0))
 
 
 # Classificazione Random Forest
@@ -121,14 +121,14 @@ def random_forest_classification(training, target):
         param_distributions=parameters_rf,
         n_iter=20,
         cv=5,
-        verbose=1,
+        verbose=0,
         n_jobs=-1,
         scoring='accuracy'
     )
 
     rf1 = random_search_rf.fit(x_train, y_train)
     y_pred_rf1 = rf1.predict(x_test)
-    print("Migliori parametri (RandomForest):", random_search_rf.best_params_)
+    #print("Migliori parametri (RandomForest):", random_search_rf.best_params_)
 
     # Applicazione del miglior modello
     rf = RandomForestClassifier(**random_search_rf.best_params_)
@@ -136,7 +136,7 @@ def random_forest_classification(training, target):
     y_pred_rf = rf.predict(x_test)
 
     # Risultati
-    print("Accuratezza (RandomForest):", metrics.accuracy_score(y_test, y_pred_rf))
-    print(classification_report(y_test, y_pred_rf, zero_division=0))
+    #print("Accuratezza (RandomForest):", metrics.accuracy_score(y_test, y_pred_rf))
+    #print(classification_report(y_test, y_pred_rf, zero_division=0))
 
     return rf
