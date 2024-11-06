@@ -1,27 +1,24 @@
 from sklearn import preprocessing
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import pairwise_distances  # Importa la funzione per calcolare le distanze
 
 from playerposprediction import *
 
 
 def reformat_player(row, player):
-    # Riformatta il nome del giocatore utilizzando il dizionario player_dic
     for key in player_dic:
         if player_dic[key] == row[player]:
             row[player] = key
             return row[player]
 
 
-def similarity_with_cosine(row_a, row_b):
-    # Calcola la similarità coseno tra due righe
-    element = cosine_similarity([row_a], [row_b])
-    row_a['similarity'] = element[0][0]
-    return row_a['similarity']
+def similarity_with_manhattan(row_a, row_b):
+    # Calcola la distanza di Manhattan tra due righe
+    distance = pairwise_distances([row_a], [row_b], metric='manhattan')
+    return 1 / (1 + distance[0][0])  # Invertiamo la distanza per trattarla come similarità
 
 
 def set_recommender(ast, pos, matchplayed, crdy, crdr, gls, player, born):
-    # Carica i dati dei giocatori e il dizionario di conversione
+    # Carica i dati dei giocatori
     cluster_dataset = pd.read_csv('../dataset/players_preprocessato.csv')
     conversion = pd.read_csv('../dataset/dizionario.csv')
 
@@ -75,50 +72,39 @@ def set_recommender(ast, pos, matchplayed, crdy, crdr, gls, player, born):
     # Normalizza i dati dell'utente
     row_user_normalized = preprocessing.normalize([row_user])
 
-    # Esegue il clustering dei dati dei giocatori
-    kmeans = KMeans(n_clusters=3).fit(preprocessing.normalize(cluster_dataset))
-
-    # Assegna i cluster ai dati dei giocatori
-    cluster_dataset["cluster"] = kmeans.labels_
-
-    # Predizione del cluster per i dati dell'utente
-    prediction = kmeans.predict(row_user_normalized)
-
-    # Seleziona il cluster dell'utente
-    user_cluster = prediction[0]
-    split_cluster = cluster_dataset[cluster_dataset['cluster'].apply(lambda x: x == user_cluster)]
-
-    # Rimuove la colonna 'cluster'
-    split_cluster = split_cluster.drop(columns=['cluster'])
+    # Normalizza i dati dei giocatori e converte in DataFrame
+    cluster_dataset_normalized = preprocessing.normalize(cluster_dataset)
+    cluster_dataset_normalized = pd.DataFrame(cluster_dataset_normalized, columns=cluster_dataset.columns)
 
     # Calcola la similarità tra i dati dell'utente e i dati dei giocatori
-    split_cluster['similarity'] = split_cluster.apply(lambda row: similarity_with_cosine(row, row_user), axis=1)
+    cluster_dataset['similarity'] = cluster_dataset_normalized.apply(
+        lambda row: similarity_with_manhattan(row, row_user_normalized[0]), axis=1
+    )
 
     # Ordina i giocatori in base alla similarità
-    split_cluster.sort_values(['similarity'], ascending=False, inplace=True)
+    cluster_dataset.sort_values(['similarity'], ascending=False, inplace=True)
 
     # Imposta il dizionario dei giocatori
     set_player()
 
     # Seleziona i primi 10 giocatori più simili
-    ten_sim = split_cluster.head(10)
+    ten_sim = cluster_dataset.head(10)
 
     # Riformatta i nomi dei giocatori
     ten_sim = ten_sim.loc[:, ['Player_format', 'similarity']]
     ten_sim['Player_format'] = ten_sim.apply(lambda row: reformat_player(row, 'Player_format'), axis=1)
 
-    # Ordina i giocatori in base alla similarità
-    ten_sim.sort_values(['similarity'], ascending=False, inplace=True)
+    # Filtra i giocatori suggeriti che sono già stati selezionati dall'utente
+    user_selected_player = player_dic.get(player, None)  # Ottieni il valore del giocatore selezionato
+    if user_selected_player is not None:
+        ten_sim = ten_sim[ten_sim['Player_format'] != user_selected_player]
 
     # Stampa i giocatori suggeriti
     print("I giocatori suggeriti in base alle tue preferenze sono:\n")
 
-    i = 1
-    for element in ten_sim['Player_format']:
+    for i, element in enumerate(ten_sim['Player_format'], start=1):
         print(f"{i}) {element}")
-        i = i + 1
 
 
 def main(ast, pos, matchplayed, crdy, crdr, gls, player, born):
-    # Funzione principale per la raccomandazione dei giocatori
     set_recommender(ast, pos, matchplayed, crdy, crdr, gls, player, born)
